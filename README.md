@@ -29,7 +29,10 @@ cd job-market-tracker
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Add your API key in config.py
+# 3. Create your local config file from the template
+cp config.example.py config.py
+
+# 4. Add your API key in config.py
 #    Get it at: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 ```
 
