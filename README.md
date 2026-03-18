@@ -1,20 +1,20 @@
 # Job Market Tracker 📊
 
-Pipeline Python che scarica offerte di lavoro da **JSearch** (Indeed, LinkedIn, Glassdoor via RapidAPI), le pulisce con **Pandas** e le esporta in formato **.dta nativo Stata**.
+Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, Glassdoor via RapidAPI), cleans them with **Pandas**, and exports them as native Stata **.dta** files.
 
 ---
 
-## Struttura
+## Structure
 
 ```
 job-market-tracker/
-├── config.py          # API key e parametri default
-├── fetch_jobs.py      # Chiamata API → JSON grezzo
-├── transform.py       # Pandas: pulizia e normalizzazione
-├── export.py          # Export → .dta (Stata) + .csv
-├── main.py            # Entry point con argparse
+├── config.py          # API key and default parameters
+├── fetch_jobs.py      # API call -> raw JSON
+├── transform.py       # Pandas: cleaning and normalization
+├── export.py          # Export -> .dta (Stata) + .csv
+├── main.py            # Entry point with argparse
 ├── requirements.txt
-└── output/            # File generati (gitignored)
+└── output/            # Generated files (gitignored)
 ```
 
 ---
@@ -22,92 +22,92 @@ job-market-tracker/
 ## Setup
 
 ```bash
-# 1. Clona il repo
+# 1. Clone the repo
 git clone https://github.com/TUO_USERNAME/job-market-tracker.git
 cd job-market-tracker
 
-# 2. Installa dipendenze
+# 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Inserisci la tua API key in config.py
-#    Ottienila su: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+# 3. Add your API key in config.py
+#    Get it at: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 ```
 
 ---
 
-## Uso
+## Usage
 
 ```bash
-# Ricerca base (default: Italia, ultimo mese, 3 pagine = ~30 offerte)
+# Basic search (default: Italy, last month, 3 pages = ~30 jobs)
 python main.py "data engineer"
 
-# Ricerca avanzata
+# Advanced search
 python main.py "AI economist" --pages 5 --date week --country us
 
-# Solo remote, senza CSV
+# Remote only, no CSV
 python main.py "machine learning" --remote-only --no-csv
 
-# Salva anche il JSON grezzo (utile per debug)
+# Also save raw JSON (useful for debugging)
 python main.py "quantitative analyst" --save-raw
 ```
 
-### Parametri disponibili
+### Available Parameters
 
-| Parametro | Default | Descrizione |
+| Parameter | Default | Description |
 |-----------|---------|-------------|
-| `query` | — | Stringa di ricerca (obbligatorio) |
-| `--pages` | 3 | Pagine da scaricare (10 offerte/pagina) |
+| `query` | — | Search string (required) |
+| `--pages` | 3 | Pages to fetch (10 jobs/page) |
 | `--date` | month | `all`, `today`, `3days`, `week`, `month` |
-| `--country` | it | Codice ISO paese (`it`, `us`, `gb`, ...) |
-| `--remote-only` | False | Solo offerte remote |
-| `--no-csv` | False | Non genera il CSV |
-| `--save-raw` | False | Salva il JSON grezzo |
+| `--country` | it | ISO country code (`it`, `us`, `gb`, ...) |
+| `--remote-only` | False | Remote jobs only |
+| `--no-csv` | False | Do not generate CSV |
+| `--save-raw` | False | Save raw JSON |
 
 ---
 
 ## Output
 
-I file vengono salvati nella cartella `output/` con naming automatico:
+Files are saved in the `output/` folder with automatic naming:
 
 ```
 output/
-├── data_engineer_20240315_143022.dta    ← importa direttamente in Stata
-└── data_engineer_20240315_143022.csv    ← preview rapida
+├── data_engineer_20240315_143022.dta    <- import directly in Stata
+└── data_engineer_20240315_143022.csv    <- quick preview
 ```
 
-### Variabili nel .dta
+### Variables in .dta
 
-| Variabile | Tipo | Descrizione |
+| Variable | Type | Description |
 |-----------|------|-------------|
-| `job_id` | string | ID univoco offerta |
-| `job_title` | string | Titolo posizione |
-| `employer_name` | string | Azienda |
+| `job_id` | string | Unique job ID |
+| `job_title` | string | Job title |
+| `employer_name` | string | Company |
 | `employment_type` | string | FULLTIME / PARTTIME / CONTRACTOR |
-| `is_remote` | int (0/1) | Posizione remota |
-| `city`, `state`, `country` | string | Localizzazione |
-| `posted_at` | datetime | Data pubblicazione (UTC) |
-| `salary_min`, `salary_max` | float | Salario min/max |
-| `salary_currency` | string | Valuta (EUR, USD, ...) |
+| `is_remote` | int (0/1) | Remote position |
+| `city`, `state`, `country` | string | Location |
+| `posted_at` | datetime | Posted date (UTC) |
+| `salary_min`, `salary_max` | float | Min/max salary |
+| `salary_currency` | string | Currency (EUR, USD, ...) |
 | `salary_period` | string | YEAR / MONTH / HOUR |
-| `description` | string | Descrizione offerta (testo) |
-| `highlight_qualifications` | string | Requisiti (pipe-separated) |
-| `highlight_responsibilities` | string | Responsabilità |
+| `description` | string | Job description text |
+| `highlight_qualifications` | string | Qualifications (pipe-separated) |
+| `highlight_responsibilities` | string | Responsibilities |
 | `highlight_benefits` | string | Benefits |
-| `apply_link` | string | Link candidatura |
-| `fetched_at` | string | Timestamp del fetch |
+| `apply_link` | string | Application link |
+| `fetched_at` | string | Fetch timestamp |
 
 ---
 
 ## Import in Stata
 
 ```stata
-* Import diretto
+* Direct import
 use "output/data_engineer_20240315_143022.dta", clear
 
-* Oppure da CSV
+* Or from CSV
 import delimited "output/data_engineer_20240315_143022.csv", clear stringcols(_all)
 
-* Analisi base
+* Basic analysis
 describe
 tab employment_type
 tab is_remote
@@ -116,16 +116,16 @@ summarize salary_min salary_max
 
 ---
 
-## Dipendenze
+## Dependencies
 
-- `requests` — chiamate HTTP all'API
-- `pandas` — trasformazione dati
-- `pyreadstat` — scrittura .dta nativo Stata 14/15
+- `requests` - HTTP API calls
+- `pandas` - data transformation
+- `pyreadstat` - native .dta writing for Stata 14/15
 
 ---
 
 ## Note
 
-- Il piano **free** di JSearch su RapidAPI permette **200 chiamate/mese** (≈ 2.000 offerte)
-- Ogni pagina = 1 chiamata API → con `--pages 3` usi 3 chiamate
-- I file in `output/` sono gitignored — non committare dati personali o chiavi API
+- The **free** JSearch plan on RapidAPI allows **200 calls/month** (about 2,000 jobs)
+- Each page = 1 API call, so `--pages 3` uses 3 calls
+- Files in `output/` are gitignored; do not commit personal data or API keys

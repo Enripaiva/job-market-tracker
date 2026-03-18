@@ -1,11 +1,3 @@
-# main.py
-"""
-Job Market Tracker — entry point
-Uso:
-    python main.py "data engineer italy"
-    python main.py "AI machine learning" --pages 5 --date today --country us
-    python main.py "economist" --remote-only --no-csv
-"""
 import argparse
 import os
 from datetime import datetime
@@ -17,46 +9,46 @@ from export import export_dta, export_csv
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Scarica offerte di lavoro da JSearch (Indeed/LinkedIn) e salva in .dta per Stata."
+        description="Download job postings from JSearch (Indeed/LinkedIn) and save them as .dta for Stata."
     )
     parser.add_argument(
         "query",
         type=str,
-        help='Stringa di ricerca es. "data engineer" oppure "AI economist italy"'
+        help='Search string, e.g. "data engineer" or "AI economist italy"'
     )
     parser.add_argument(
         "--pages",
         type=int,
         default=3,
-        help="Numero di pagine da scaricare (10 offerte/pagina, default: 3)"
+        help="Number of pages to fetch (10 jobs/page, default: 3)"
     )
     parser.add_argument(
         "--date",
         type=str,
         default="month",
         choices=["all", "today", "3days", "week", "month"],
-        help="Filtro data pubblicazione (default: month)"
+        help="Posted date filter (default: month)"
     )
     parser.add_argument(
         "--country",
         type=str,
         default="it",
-        help="Codice paese ISO 2 lettere (default: it)"
+        help="2-letter ISO country code (default: it)"
     )
     parser.add_argument(
         "--remote-only",
         action="store_true",
-        help="Mostra solo offerte remote"
+        help="Include remote jobs only"
     )
     parser.add_argument(
         "--no-csv",
         action="store_true",
-        help="Non salvare il CSV (solo .dta)"
+        help="Do not save CSV (only .dta)"
     )
     parser.add_argument(
         "--save-raw",
         action="store_true",
-        help="Salva anche il JSON grezzo per debug"
+        help="Also save raw JSON for debugging"
     )
     return parser.parse_args()
 
@@ -64,7 +56,7 @@ def parse_args():
 def main():
     args = parse_args()
 
-    # Timestamp per i nomi file
+    # Timestamp for output file names
     ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
     slug = args.query.replace(" ", "_").replace("/", "-")[:40]
     base_name = f"{slug}_{ts}"
@@ -74,11 +66,11 @@ def main():
     print(f"\n{'='*55}")
     print(f"  Job Market Tracker")
     print(f"  Query:   {args.query}")
-    print(f"  Paese:   {args.country.upper()} | Data: {args.date} | Pagine: {args.pages}")
+    print(f"  Country: {args.country.upper()} | Date: {args.date} | Pages: {args.pages}")
     print(f"{'='*55}\n")
 
     # --- STEP 1: FETCH ---
-    print("[ 1/3 ] Fetch offerte...")
+    print("[ 1/3 ] Fetch jobs...")
     jobs_raw = fetch_jobs(
         query=args.query,
         num_pages=args.pages,
@@ -88,19 +80,19 @@ def main():
     )
 
     if not jobs_raw:
-        print("\nNessuna offerta trovata. Prova con una query diversa.")
+        print("\nNo jobs found. Try a different query.")
         return
 
     if args.save_raw:
         save_raw_json(jobs_raw, f"output/{base_name}_raw.json")
 
     # --- STEP 2: TRANSFORM ---
-    print("\n[ 2/3 ] Trasformazione con Pandas...")
+    print("\n[ 2/3 ] Transform with Pandas...")
     df_raw = extract(jobs_raw)
     df_clean = transform(df_raw)
 
-    # Preview rapida
-    print(f"\nAnteprima colonne: {list(df_clean.columns)}")
+    # Quick preview
+    print(f"\nPreview columns: {list(df_clean.columns)}")
 
     # --- STEP 3: EXPORT ---
     print("\n[ 3/3 ] Export...")
@@ -112,7 +104,7 @@ def main():
         export_csv(df_clean, csv_path)
 
     print(f"\n{'='*55}")
-    print(f"  Fatto! File salvati in /output/")
+    print(f"  Done! Files saved in /output/")
     print(f"  .dta  → {dta_path}")
     if not args.no_csv:
         print(f"  .csv  → {csv_path}")

@@ -11,19 +11,7 @@ def fetch_jobs(
     country: str = DEFAULT_COUNTRY,
     remote_only: bool = DEFAULT_REMOTE_ONLY
 ) -> list[dict]:
-    """
-    Chiama JSearch API e ritorna una lista di offerte di lavoro (JSON grezzo).
-    
-    Args:
-        query:       stringa di ricerca es. "data engineer" o "AI machine learning"
-        num_pages:   quante pagine di risultati (10 offerte per pagina)
-        date_posted: filtro data — "all", "today", "3days", "week", "month"
-        country:     codice paese ISO 2 es. "it", "us", "gb"
-        remote_only: se True filtra solo offerte remote
-    
-    Returns:
-        Lista di dict (offerte grezze da JSearch)
-    """
+
     url = "https://jsearch.p.rapidapi.com/search"
     headers = {
         "x-rapidapi-key": RAPIDAPI_KEY,
@@ -51,32 +39,31 @@ def fetch_jobs(
 
             jobs = data.get("data", [])
             if not jobs:
-                print(f"  Nessun risultato a pagina {page}, stop.")
+                print(f"  No results on page {page}, stopping.")
                 break
 
             all_jobs.extend(jobs)
-            print(f"  Trovate {len(jobs)} offerte (totale: {len(all_jobs)})")
+            print(f"  Found {len(jobs)} jobs (total: {len(all_jobs)})")
 
-            # Pausa educata tra le chiamate per non bucare il rate limit
+            # Small pause between calls to reduce the chance of hitting rate limits
             if page < num_pages:
                 time.sleep(1)
 
         except requests.exceptions.HTTPError as e:
-            print(f"  Errore HTTP pagina {page}: {e}")
+            print(f"  HTTP error on page {page}: {e}")
             break
         except requests.exceptions.ConnectionError:
-            print("  Errore di connessione. Controlla la rete.")
+            print("  Connection error. Check your network.")
             break
         except requests.exceptions.Timeout:
-            print("  Timeout. Riprova più tardi.")
+            print("  Timeout. Try again later.")
             break
 
-    print(f"\nFetch completato: {len(all_jobs)} offerte totali.")
+    print(f"\nFetch completed: {len(all_jobs)} total jobs.")
     return all_jobs
 
 
 def save_raw_json(jobs: list[dict], filepath: str) -> None:
-    """Salva il JSON grezzo per debug / archivio."""
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(jobs, f, ensure_ascii=False, indent=2)
-    print(f"JSON grezzo salvato in: {filepath}")
+    print(f"Raw JSON saved to: {filepath}")
