@@ -8,7 +8,7 @@ Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, 
 
 ```
 job-market-tracker/
-├── config.py          # API key and default parameters
+├── config.py          # Local credentials (gitignored)
 ├── fetch_jobs.py      # API call -> raw JSON
 ├── transform.py       # Pandas: cleaning and normalization
 ├── export.py          # Export -> .dta (Stata) + .csv
@@ -29,11 +29,14 @@ cd job-market-tracker
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Create your local config file from the template
-cp config.example.py config.py
+# 3. Create local credentials file (config.py)
+cat > config.py << 'EOF'
+RAPIDAPI_KEY = "YOUR_RAPIDAPI_KEY"
+RAPIDAPI_HOST = "jsearch.p.rapidapi.com"
+EOF
 
-# 4. Add your API key in config.py
-#    Get it at: https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
+# 4. Get your key at:
+#    https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 ```
 
 ---

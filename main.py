@@ -3,13 +3,19 @@ import os
 from datetime import datetime
 
 from fetch_jobs import fetch_jobs, save_raw_json
-from transform import extract, transform
-from export import export_dta, export_csv
+from transform import transform
+from export import export_csv
+
+# ── Defaults ────────────────────────────────────────────
+DEFAULT_PAGES   = 100
+DEFAULT_DATE    = "all"   # all | today | 3days | week | month
+DEFAULT_COUNTRY = "it"
+# ────────────────────────────────────────────────────────
 
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Download job postings from JSearch (Indeed/LinkedIn) and save them as .dta for Stata."
+        description="Download job postings from JSearch (Indeed/LinkedIn) and save them as CSV."
     )
     parser.add_argument(
         "query",
@@ -19,21 +25,21 @@ def parse_args():
     parser.add_argument(
         "--pages",
         type=int,
-        default=3,
-        help="Number of pages to fetch (10 jobs/page, default: 3)"
+        default=DEFAULT_PAGES,
+        help=f"Number of pages to fetch (10 jobs/page, default: {DEFAULT_PAGES})"
     )
     parser.add_argument(
         "--date",
         type=str,
-        default="month",
+        default=DEFAULT_DATE,
         choices=["all", "today", "3days", "week", "month"],
-        help="Posted date filter (default: month)"
+        help=f"Posted date filter (default: {DEFAULT_DATE})"
     )
     parser.add_argument(
         "--country",
         type=str,
-        default="it",
-        help="2-letter ISO country code (default: it)"
+        default=DEFAULT_COUNTRY,
+        help=f"2-letter ISO country code (default: {DEFAULT_COUNTRY})"
     )
     parser.add_argument(
         "--remote-only",
@@ -43,7 +49,7 @@ def parse_args():
     parser.add_argument(
         "--no-csv",
         action="store_true",
-        help="Do not save CSV (only .dta)"
+        help="Do not save CSV file"
     )
     parser.add_argument(
         "--save-raw",
@@ -70,8 +76,8 @@ def main():
     print(f"{'='*55}\n")
 
     # --- STEP 1: FETCH ---
-    print("[ 1/3 ] Fetch jobs...")
-    jobs_raw = fetch_jobs(
+    print("[ 1/2 ] Fetch jobs...")
+    df = fetch_jobs(
         query=args.query,
         num_pages=args.pages,
         date_posted=args.date,
@@ -79,25 +85,22 @@ def main():
         remote_only=args.remote_only
     )
 
-    if not jobs_raw:
+    if df.empty:
         print("\nNo jobs found. Try a different query.")
         return
 
     if args.save_raw:
-        save_raw_json(jobs_raw, f"output/{base_name}_raw.json")
+        save_raw_json(df.to_dict('records'), f"output/{base_name}_raw.json")
 
     # --- STEP 2: TRANSFORM ---
-    print("\n[ 2/3 ] Transform with Pandas...")
-    df_raw = extract(jobs_raw)
-    df_clean = transform(df_raw)
+    print("\n[ 2/2 ] Transform with Pandas...")
+    df_clean = transform(df)
 
     # Quick preview
     print(f"\nPreview columns: {list(df_clean.columns)}")
 
     # --- STEP 3: EXPORT ---
-    print("\n[ 3/3 ] Export...")
-    dta_path = f"output/{base_name}.dta"
-    export_dta(df_clean, dta_path)
+    print("\n[ 2/2 ] Export...")
 
     if not args.no_csv:
         csv_path = f"output/{base_name}.csv"
@@ -105,7 +108,6 @@ def main():
 
     print(f"\n{'='*55}")
     print(f"  Done! Files saved in /output/")
-    print(f"  .dta  → {dta_path}")
     if not args.no_csv:
         print(f"  .csv  → {csv_path}")
     print(f"{'='*55}\n")

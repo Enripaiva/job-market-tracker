@@ -2,15 +2,16 @@
 import requests
 import json
 import time
-from config import RAPIDAPI_KEY, RAPIDAPI_HOST, DEFAULT_NUM_PAGES, DEFAULT_DATE_POSTED, DEFAULT_COUNTRY, DEFAULT_REMOTE_ONLY
+import pandas as pd
+from config import RAPIDAPI_KEY, RAPIDAPI_HOST
 
 def fetch_jobs(
     query: str,
-    num_pages: int = DEFAULT_NUM_PAGES,
-    date_posted: str = DEFAULT_DATE_POSTED,
-    country: str = DEFAULT_COUNTRY,
-    remote_only: bool = DEFAULT_REMOTE_ONLY
-) -> list[dict]:
+    num_pages: int,
+    date_posted: str,
+    country: str,
+    remote_only: bool
+) -> pd.DataFrame:
 
     url = "https://jsearch.p.rapidapi.com/search"
     headers = {
@@ -19,8 +20,12 @@ def fetch_jobs(
     }
 
     all_jobs = []
+    fatal = False
 
     for page in range(1, num_pages + 1):
+        if fatal:
+            break
+
         params = {
             "query": query,
             "page": str(page),
@@ -31,36 +36,46 @@ def fetch_jobs(
         }
 
         print(f"  Fetching page {page}/{num_pages}...")
+        page_done = False
 
-        try:
-            response = requests.get(url, headers=headers, params=params, timeout=15)
-            response.raise_for_status()
-            data = response.json()
+        for attempt in range(1, 4):
+            try:
+                response = requests.get(url, headers=headers, params=params, timeout=30)
+                response.raise_for_status()
+                data = response.json()
+                print(f"  DEBUG raw response: {json.dumps(data, indent=2)[:500]}")
 
-            jobs = data.get("data", [])
-            if not jobs:
-                print(f"  No results on page {page}, stopping.")
+                jobs = data.get("data", [])
+                if not jobs:
+                    api_status = data.get("status", "unknown")
+                    print(f"  No results on page {page} (API status: {api_status}), stopping.")
+                    fatal = True
+                    break
+
+                all_jobs.extend(jobs)
+                print(f"  Found {len(jobs)} jobs (total: {len(all_jobs)})")
+                page_done = True
                 break
 
-            all_jobs.extend(jobs)
-            print(f"  Found {len(jobs)} jobs (total: {len(all_jobs)})")
+            except requests.exceptions.HTTPError as e:
+                print(f"  HTTP error on page {page}: {e}")
+                fatal = True
+                break
+            except (requests.exceptions.ConnectionError, requests.exceptions.Timeout) as e:
+                print(f"  {type(e).__name__} on page {page}, attempt {attempt}/3.")
+                if attempt < 3:
+                    time.sleep(3 * attempt)
+                else:
+                    fatal = True
 
-            # Small pause between calls to reduce the chance of hitting rate limits
-            if page < num_pages:
-                time.sleep(1)
-
-        except requests.exceptions.HTTPError as e:
-            print(f"  HTTP error on page {page}: {e}")
-            break
-        except requests.exceptions.ConnectionError:
-            print("  Connection error. Check your network.")
-            break
-        except requests.exceptions.Timeout:
-            print("  Timeout. Try again later.")
-            break
+        if page_done and page < num_pages:
+            time.sleep(1)
 
     print(f"\nFetch completed: {len(all_jobs)} total jobs.")
-    return all_jobs
+    
+    # Convert to DataFrame
+    df = pd.DataFrame(all_jobs)
+    return df
 
 
 def save_raw_json(jobs: list[dict], filepath: str) -> None:

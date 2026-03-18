@@ -26,12 +26,6 @@ COLUMNS_MAP = {
 }
 
 
-def extract(jobs_raw: list[dict]) -> pd.DataFrame:
-    """Convert the raw list of dicts into a DataFrame."""
-    df = pd.DataFrame(jobs_raw)
-    return df
-
-
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     """
     Clean and normalize the DataFrame.
@@ -97,8 +91,3 @@ def transform(df: pd.DataFrame) -> pd.DataFrame:
     print(f"Transform completed: {len(df)} jobs, {len(df.columns)} columns.")
     return df
 
-
-def load(df: pd.DataFrame, filepath: str) -> None:
-    """Save DataFrame as CSV (debug/preview)."""
-    df.to_csv(filepath, index=False, encoding="utf-8-sig")
-    print(f"CSV saved to: {filepath}")
