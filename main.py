@@ -1,7 +1,10 @@
 import argparse
 import os
 from datetime import datetime
+from pathlib import Path
 from typing import Optional
+
+from dotenv import load_dotenv
 
 from pipeline import run_export, run_extract, run_transform
 
@@ -9,6 +12,7 @@ from pipeline import run_export, run_extract, run_transform
 DEFAULT_PAGES   = 5
 DEFAULT_DATE    = "all"   # all | today | 3days | week | month
 DEFAULT_COUNTRY = "it"
+DEFAULT_RAPIDAPI_HOST = "jsearch.p.rapidapi.com"
 # ────────────────────────────────────────────────────────
 
 
@@ -64,6 +68,18 @@ def build_base_name(query: str) -> str:
     return f"{slug}_{ts}"
 
 
+def load_api_settings() -> tuple[str, str]:
+    base_dir = Path(__file__).resolve().parent
+    load_dotenv(base_dir / ".env")
+
+    api_key = (os.getenv("RAPIDAPI_KEY") or "").strip()
+    if not api_key:
+        raise RuntimeError("Missing RAPIDAPI_KEY in .env")
+
+    api_host = (os.getenv("RAPIDAPI_HOST") or "").strip() or DEFAULT_RAPIDAPI_HOST
+    return api_key, api_host
+
+
 def log_run_start(args: argparse.Namespace) -> None:
     print(f"\n{'='*55}")
     print("  Job Market Tracker")
@@ -83,11 +99,12 @@ def log_run_end(csv_path: Optional[str]) -> None:
 def main() -> None:
     args = parse_args()
     base_name = build_base_name(args.query)
+    api_key, api_host = load_api_settings()
 
     os.makedirs("output", exist_ok=True)
     log_run_start(args)
 
-    df = run_extract(args, base_name)
+    df = run_extract(args, base_name, api_key, api_host)
 
     df_clean = run_transform(df)
 

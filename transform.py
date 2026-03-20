@@ -29,15 +29,12 @@ OUTPUT_COLUMNS = [
 
 
 def _select_and_rename_columns(df: pd.DataFrame) -> pd.DataFrame:
-    available = {k: v for k, v in COLUMNS_MAP.items() if k in df.columns}
-    return df[list(available.keys())].rename(columns=available)
-
+    return df[list(COLUMNS_MAP.keys())].rename(columns=COLUMNS_MAP)
 
 def _normalize_remote_flag(df: pd.DataFrame) -> pd.DataFrame:
     if "is_remote" in df.columns:
         df["is_remote"] = df["is_remote"].fillna(False).astype(bool)
     return df
-
 
 def _clean_description(df: pd.DataFrame) -> pd.DataFrame:
     if "description" in df.columns:
@@ -49,16 +46,13 @@ def _clean_description(df: pd.DataFrame) -> pd.DataFrame:
         )
     return df
 
-
 def _add_fetch_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     df["fetched_at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
     return df
 
-
 def _select_output_columns(df: pd.DataFrame) -> pd.DataFrame:
     available_columns = [col for col in OUTPUT_COLUMNS if col in df.columns]
     return df[available_columns]
-
 
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     """Clean and normalize the extracted jobs DataFrame."""

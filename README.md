@@ -8,7 +8,7 @@ Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, 
 
 ```
 job-market-tracker/
-├── config.py          # Local credentials (gitignored)
+├── .env               # Local credentials (gitignored)
 ├── fetch_jobs.py      # API call -> raw JSON
 ├── transform.py       # Pandas: cleaning and normalization
 ├── export.py          # Export -> .dta (Stata) + .csv
@@ -29,10 +29,10 @@ cd job-market-tracker
 # 2. Install dependencies
 pip install -r requirements.txt
 
-# 3. Create local credentials file (config.py)
-cat > config.py << 'EOF'
-RAPIDAPI_KEY = "YOUR_RAPIDAPI_KEY"
-RAPIDAPI_HOST = "jsearch.p.rapidapi.com"
+# 3. Create local credentials file (.env)
+cat > .env << 'EOF'
+RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
+RAPIDAPI_HOST=jsearch.p.rapidapi.com
 EOF
 
 # 4. Get your key at:
@@ -127,6 +127,7 @@ summarize salary_min salary_max
 - `requests` - HTTP API calls
 - `pandas` - data transformation
 - `pyreadstat` - native .dta writing for Stata 14/15
+- `python-dotenv` - load local environment variables in `main.py`
 
 ---
 
@@ -134,4 +135,4 @@ summarize salary_min salary_max
 
 - The **free** JSearch plan on RapidAPI allows **200 calls/month** (about 2,000 jobs)
 - Each page = 1 API call, so `--pages 3` uses 3 calls
-- Files in `output/` are gitignored; do not commit personal data or API keys
+- Files in `output/` and `.env` are gitignored; do not commit personal data or API keys

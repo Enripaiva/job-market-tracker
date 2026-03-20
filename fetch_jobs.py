@@ -1,11 +1,14 @@
 # fetch_jobs.py
-import requests
 import json
 import time
+
 import pandas as pd
-from config import RAPIDAPI_KEY, RAPIDAPI_HOST
+import requests
+
 
 def fetch_jobs(
+    api_key: str,
+    api_host: str,
     query: str,
     num_pages: int,
     date_posted: str,
@@ -15,8 +18,8 @@ def fetch_jobs(
 
     url = "https://jsearch.p.rapidapi.com/search"
     headers = {
-        "x-rapidapi-key": RAPIDAPI_KEY,
-        "x-rapidapi-host": RAPIDAPI_HOST
+        "x-rapidapi-key": api_key,
+        "x-rapidapi-host": api_host,
     }
 
     all_jobs = []

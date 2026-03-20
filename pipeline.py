@@ -8,11 +8,18 @@ from fetch_jobs import fetch_jobs, save_raw_json
 from transform import transform
 
 
-def run_extract(args: argparse.Namespace, base_name: str) -> pd.DataFrame:
+def run_extract(
+    args: argparse.Namespace,
+    base_name: str,
+    api_key: str,
+    api_host: str,
+) -> pd.DataFrame:
     """Run the extract step and optionally persist the fetched payload."""
     print("[ 1/3 ] Fetch jobs...")
 
     df = fetch_jobs(
+        api_key=api_key,
+        api_host=api_host,
         query=args.query,
         num_pages=args.pages,
         date_posted=args.date,
