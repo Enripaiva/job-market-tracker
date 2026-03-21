@@ -1,6 +1,6 @@
 import argparse
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 from dotenv import load_dotenv
@@ -66,7 +66,7 @@ def resolve_queries(query: str | None) -> list[str]:
 
 
 def build_base_name(query: str) -> str:
-    ts = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
     slug = query.replace(" ", "_").replace("/", "-")[:40]
     return f"{slug}_{ts}"
 

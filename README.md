@@ -1,6 +1,6 @@
 # Job Market Tracker 📊
 
-Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, Glassdoor via RapidAPI), cleans them with **Pandas**, and exports them as native Stata **.dta** files.
+Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, Glassdoor via RapidAPI), cleans them with **Pandas**, and exports them as CSV.
 
 ---
 
@@ -11,7 +11,7 @@ job-market-tracker/
 ├── .env               # Local credentials (gitignored)
 ├── fetch_jobs.py      # API call -> raw JSON
 ├── transform.py       # Pandas: cleaning and normalization
-├── export.py          # Export -> .dta (Stata) + .csv
+├── export.py          # Export utilities
 ├── main.py            # Entry point with argparse
 ├── queries.py         # Default query list
 ├── requirements.txt
@@ -60,7 +60,7 @@ python main.py --query "AI economist" --pages 5 --date week --country us
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--query` | all items in `queries.py` | Search string override |
-| `--pages` | 3 | Pages to fetch (10 jobs/page) |
+| `--pages` | 5 | Pages to fetch (10 jobs/page) |
 | `--date` | month | `all`, `today`, `3days`, `week`, `month` |
 | `--country` | it | ISO country code (`it`, `us`, `gb`, ...) |
 
@@ -72,29 +72,18 @@ Files are saved in the `output/` folder with automatic naming:
 
 ```
 output/
-├── data_engineer_20240315_143022.dta    <- import directly in Stata
-└── data_engineer_20240315_143022.csv    <- quick preview
+└── multi_query_20240315_143022.csv
 ```
 
-### Variables in .dta
+### Columns in CSV
 
-| Variable | Type | Description |
+| Column | Type | Description |
 |-----------|------|-------------|
-| `job_id` | string | Unique job ID |
 | `job_title` | string | Job title |
 | `employer_name` | string | Company |
-| `employment_type` | string | FULLTIME / PARTTIME / CONTRACTOR |
-| `is_remote` | int (0/1) | Remote position |
-| `city`, `state`, `country` | string | Location |
-| `posted_at` | datetime | Posted date (UTC) |
-| `salary_min`, `salary_max` | float | Min/max salary |
-| `salary_currency` | string | Currency (EUR, USD, ...) |
-| `salary_period` | string | YEAR / MONTH / HOUR |
+| `city` | string | Job city |
+| `country` | string | Job country |
 | `description` | string | Job description text |
-| `highlight_qualifications` | string | Qualifications (pipe-separated) |
-| `highlight_responsibilities` | string | Responsibilities |
-| `highlight_benefits` | string | Benefits |
-| `apply_link` | string | Application link |
 | `search_query` | string | Query that generated the job record |
 | `fetched_at` | string | Fetch timestamp |
 
@@ -103,17 +92,11 @@ output/
 ## Import in Stata
 
 ```stata
-* Direct import
-use "output/data_engineer_20240315_143022.dta", clear
-
-* Or from CSV
 import delimited "output/data_engineer_20240315_143022.csv", clear stringcols(_all)
 
 * Basic analysis
 describe
-tab employment_type
-tab is_remote
-summarize salary_min salary_max
+tab country
 ```
 
 ---
