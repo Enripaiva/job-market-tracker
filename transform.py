@@ -18,10 +18,7 @@ COLUMNS_MAP = {
 OUTPUT_COLUMNS = [
     "job_title",
     "employer_name",
-    "employment_type",
-    "is_remote",
     "city",
-    "state",
     "country",
     "description",
     "fetched_at",
@@ -49,8 +46,7 @@ def _add_fetch_timestamp(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 def _select_output_columns(df: pd.DataFrame) -> pd.DataFrame:
-    available_columns = [col for col in OUTPUT_COLUMNS if col in df.columns]
-    return df[available_columns]
+    return df.filter(items=OUTPUT_COLUMNS)
 
 def transform(df: pd.DataFrame) -> pd.DataFrame:
     """Clean and normalize the extracted jobs DataFrame."""
