@@ -79,6 +79,7 @@ output/
 
 | Column | Type | Description |
 |--------|------|-------------|
+| `job_id` | string | Unique job identifier (from API) |
 | `job_title` | string | Job title |
 | `employer_name` | string | Company name |
 | `city` | string | Job city |

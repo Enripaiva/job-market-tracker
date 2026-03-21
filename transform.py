@@ -5,6 +5,7 @@ from datetime import datetime, timezone
 
 # Columns to extract from JSearch raw JSON
 COLUMNS_MAP = {
+    "job_id":                   "job_id",
     "job_title":                "job_title",
     "employer_name":            "employer_name",
     "job_employment_type":      "employment_type",
@@ -16,6 +17,7 @@ COLUMNS_MAP = {
 }
 
 OUTPUT_COLUMNS = [
+    "job_id",
     "job_title",
     "employer_name",
     "city",
