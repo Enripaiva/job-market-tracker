@@ -1,6 +1,6 @@
 # transform.py
 import pandas as pd
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 # Columns to extract from JSearch raw JSON
@@ -32,22 +32,20 @@ def _select_and_rename_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df[list(COLUMNS_MAP.keys())].rename(columns=COLUMNS_MAP)
 
 def _normalize_remote_flag(df: pd.DataFrame) -> pd.DataFrame:
-    if "is_remote" in df.columns:
-        df["is_remote"] = df["is_remote"].fillna(False).astype(bool)
+    df["is_remote"] = df["is_remote"].fillna(False).astype(bool)
     return df
 
 def _clean_description(df: pd.DataFrame) -> pd.DataFrame:
-    if "description" in df.columns:
-        df["description"] = (
-            df["description"]
-            .fillna("")
-            .str.replace(r"\s+", " ", regex=True)
-            .str.strip()
-        )
+    df["description"] = (
+        df["description"]
+        .fillna("")
+        .str.replace(r"\s+", " ", regex=True)
+        .str.strip()
+    )
     return df
 
 def _add_fetch_timestamp(df: pd.DataFrame) -> pd.DataFrame:
-    df["fetched_at"] = datetime.utcnow().strftime("%Y-%m-%d %H:%M:%S")
+    df["fetched_at"] = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S")
     return df
 
 def _select_output_columns(df: pd.DataFrame) -> pd.DataFrame:

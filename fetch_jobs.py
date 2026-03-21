@@ -9,14 +9,13 @@ import requests
 def fetch_jobs(
     api_key: str,
     api_host: str,
+    api_url: str,
     query: str,
     num_pages: int,
     date_posted: str,
     country: str,
-    remote_only: bool
 ) -> pd.DataFrame:
 
-    url = "https://jsearch.p.rapidapi.com/search"
     headers = {
         "x-rapidapi-key": api_key,
         "x-rapidapi-host": api_host,
@@ -35,7 +34,6 @@ def fetch_jobs(
             "num_pages": "1",
             "date_posted": date_posted,
             "country": country,
-            "remote_jobs_only": str(remote_only).lower()
         }
 
         print(f"  Fetching page {page}/{num_pages}...")
@@ -43,7 +41,12 @@ def fetch_jobs(
 
         for attempt in range(1, 4):
             try:
-                response = requests.get(url, headers=headers, params=params, timeout=30)
+                response = requests.get(
+                    api_url,
+                    headers=headers,
+                    params=params,
+                    timeout=30,
+                )
                 response.raise_for_status()
                 data = response.json()
                 print(f"  DEBUG raw response: {json.dumps(data, indent=2)[:500]}")
@@ -79,9 +82,3 @@ def fetch_jobs(
     # Convert to DataFrame
     df = pd.DataFrame(all_jobs)
     return df
-
-
-def save_raw_json(jobs: list[dict], filepath: str) -> None:
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(jobs, f, ensure_ascii=False, indent=2)
-    print(f"Raw JSON saved to: {filepath}")

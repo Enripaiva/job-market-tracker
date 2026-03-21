@@ -13,6 +13,7 @@ job-market-tracker/
 ├── transform.py       # Pandas: cleaning and normalization
 ├── export.py          # Export -> .dta (Stata) + .csv
 ├── main.py            # Entry point with argparse
+├── queries.py         # Default query list
 ├── requirements.txt
 └── output/            # Generated files (gitignored)
 ```
@@ -44,30 +45,24 @@ EOF
 ## Usage
 
 ```bash
-# Basic search (default: Italy, last month, 3 pages = ~30 jobs)
-python main.py "data engineer"
+# Run all queries from queries.py
+python main.py
+
+# Single query override
+python main.py --query "data engineer"
 
 # Advanced search
-python main.py "AI economist" --pages 5 --date week --country us
-
-# Remote only, no CSV
-python main.py "machine learning" --remote-only --no-csv
-
-# Also save raw JSON (useful for debugging)
-python main.py "quantitative analyst" --save-raw
+python main.py --query "AI economist" --pages 5 --date week --country us
 ```
 
 ### Available Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
-| `query` | — | Search string (required) |
+| `--query` | all items in `queries.py` | Search string override |
 | `--pages` | 3 | Pages to fetch (10 jobs/page) |
 | `--date` | month | `all`, `today`, `3days`, `week`, `month` |
 | `--country` | it | ISO country code (`it`, `us`, `gb`, ...) |
-| `--remote-only` | False | Remote jobs only |
-| `--no-csv` | False | Do not generate CSV |
-| `--save-raw` | False | Save raw JSON |
 
 ---
 
@@ -100,6 +95,7 @@ output/
 | `highlight_responsibilities` | string | Responsibilities |
 | `highlight_benefits` | string | Benefits |
 | `apply_link` | string | Application link |
+| `search_query` | string | Query that generated the job record |
 | `fetched_at` | string | Fetch timestamp |
 
 ---
