@@ -1,24 +1,21 @@
-# Job Market Tracker 📊
+# Job Market Tracker
 
-Python pipeline that downloads job postings from **JSearch** (Indeed, LinkedIn, Glassdoor via RapidAPI), cleans them with **Pandas**, and exports them as CSV.
-
----
+Python pipeline that downloads job postings from JSearch (Indeed, LinkedIn, Glassdoor via RapidAPI), cleans them with Pandas, and exports both the full dataset and a query-level summary.
 
 ## Structure
 
-```
+```text
 job-market-tracker/
 ├── .env               # Local credentials (gitignored)
-├── fetch_jobs.py      # API call -> raw JSON
-├── transform.py       # Pandas: cleaning and normalization
-├── export.py          # Export utilities
-├── main.py            # Entry point with argparse
+├── export.py          # CSV, Parquet, and Stata export helpers
+├── fetch_jobs.py      # API call -> raw JSON -> DataFrame
+├── main.py            # CLI entry point and run orchestration
+├── pipeline.py        # Extract, transform, export steps
 ├── queries.py         # Default query list
+├── transform.py       # Cleaning and normalization
 ├── requirements.txt
 └── output/            # Generated files (gitignored)
 ```
-
----
 
 ## Setup
 
@@ -27,20 +24,22 @@ job-market-tracker/
 git clone https://github.com/TUO_USERNAME/job-market-tracker.git
 cd job-market-tracker
 
-# 2. Install dependencies
+# 2. Create and activate a virtual environment
+python -m venv .venv
+source .venv/bin/activate
+
+# 3. Install dependencies
 pip install -r requirements.txt
 
-# 3. Create local credentials file (.env)
+# 4. Create local credentials file (.env)
 cat > .env << 'EOF'
 RAPIDAPI_KEY=YOUR_RAPIDAPI_KEY
 RAPIDAPI_HOST=jsearch.p.rapidapi.com
 EOF
-
-# 4. Get your key at:
-#    https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 ```
 
----
+Get your API key from:
+https://rapidapi.com/letscrape-6bRBa3QguO5/api/jsearch
 
 ## Usage
 
@@ -55,63 +54,63 @@ python main.py --query "data engineer"
 python main.py --query "AI economist" --pages 5 --date week --country us
 ```
 
-### Available Parameters
+### Parameters
 
 | Parameter | Default | Description |
 |-----------|---------|-------------|
 | `--query` | all items in `queries.py` | Search string override |
-| `--pages` | 5 | Pages to fetch (10 jobs/page) |
-| `--date` | month | `all`, `today`, `3days`, `week`, `month` |
-| `--country` | it | ISO country code (`it`, `us`, `gb`, ...) |
-
----
+| `--pages` | 5 | Pages to fetch (10 jobs per page) |
+| `--date` | all | `all`, `today`, `3days`, `week`, `month` |
+| `--country` | it | ISO country code such as `it`, `us`, `gb` |
 
 ## Output
 
-Files are saved in the `output/` folder with automatic naming:
+Each run writes four files into `output/`, all sharing the same timestamped base name:
 
-```
+```text
 output/
-└── multi_query_20240315_143022.csv
+├── multi_query_20260321_101530.csv
+├── multi_query_20260321_101530.parquet
+├── multi_query_20260321_101530_summary.csv
+└── multi_query_20260321_101530_summary.parquet
 ```
 
-### Columns in CSV
+### Main Dataset Columns
 
 | Column | Type | Description |
-|-----------|------|-------------|
+|--------|------|-------------|
 | `job_title` | string | Job title |
-| `employer_name` | string | Company |
+| `employer_name` | string | Company name |
 | `city` | string | Job city |
 | `country` | string | Job country |
-| `description` | string | Job description text |
-| `search_query` | string | Query that generated the job record |
-| `fetched_at` | string | Fetch timestamp |
+| `description` | string | Normalized job description |
+| `fetched_at` | string | UTC timestamp of the fetch |
+| `search_query` | string | Query that produced the record |
 
----
+### Summary Dataset Columns
 
-## Import in Stata
+| Column | Type | Description |
+|--------|------|-------------|
+| `search_query` | string | Query label |
+| `job_count` | integer | Number of rows exported for that query |
 
-```stata
-import delimited "output/data_engineer_20240315_143022.csv", clear stringcols(_all)
+## Runtime Flow
 
-* Basic analysis
-describe
-tab country
-```
-
----
+1. `run_extract(...)` downloads jobs for each query.
+2. `run_transform(...)` normalizes the raw API payload.
+3. `run_export(...)` writes the main dataset and the summary dataset in CSV and Parquet format.
+4. `log_run_end(...)` prints the paths of all generated files.
 
 ## Dependencies
 
-- `requests` - HTTP API calls
-- `pandas` - data transformation
-- `pyreadstat` - native .dta writing for Stata 14/15
-- `python-dotenv` - load local environment variables in `main.py`
+- `requests` for HTTP API calls
+- `pandas` for data transformation
+- `pyarrow` as the Parquet engine used by `DataFrame.to_parquet(...)`
+- `pyreadstat` for optional Stata `.dta` exports via `export.py`
+- `python-dotenv` for loading `.env`
 
----
+## Notes
 
-## Note
-
-- The **free** JSearch plan on RapidAPI allows **200 calls/month** (about 2,000 jobs)
-- Each page = 1 API call, so `--pages 3` uses 3 calls
-- Files in `output/` and `.env` are gitignored; do not commit personal data or API keys
+- The free JSearch plan on RapidAPI allows 200 calls per month.
+- Each requested page costs one API call, so `--pages 3` uses 3 calls per query.
+- Files in `output/` and `.env` should stay uncommitted.

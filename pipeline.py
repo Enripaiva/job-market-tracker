@@ -1,8 +1,22 @@
 import pandas as pd
+from typing import TypeAlias
 
 from export import export_csv, export_parquet
 from fetch_jobs import fetch_jobs
 from transform import transform
+
+
+ExportPaths: TypeAlias = dict[str, str]
+
+
+def build_export_paths(base_name: str) -> ExportPaths:
+    """Build the output file paths for the main dataset and the summary."""
+    return {
+        "csv": f"output/{base_name}.csv",
+        "parquet": f"output/{base_name}.parquet",
+        "summary_csv": f"output/{base_name}_summary.csv",
+        "summary_parquet": f"output/{base_name}_summary.parquet",
+    }
 
 
 def run_extract(
@@ -41,12 +55,17 @@ def run_transform(df: pd.DataFrame) -> pd.DataFrame:
     return df_clean
 
 
-def run_export(df_clean: pd.DataFrame, base_name: str) -> str:
+def run_export(
+    df_clean: pd.DataFrame, summary_df: pd.DataFrame, base_name: str
+) -> ExportPaths:
     """Run the export step using the configured output module."""
     print("\n[ 3/3 ] Export...")
 
-    csv_path = f"output/{base_name}.csv"
-    parquet_path = f"output/{base_name}.parquet"
-    export_csv(df_clean, csv_path)
-    export_parquet(df_clean, parquet_path)
-    return csv_path
+    export_paths = build_export_paths(base_name)
+
+    export_csv(df_clean, export_paths["csv"])
+    export_parquet(df_clean, export_paths["parquet"])
+    export_csv(summary_df, export_paths["summary_csv"])
+    export_parquet(summary_df, export_paths["summary_parquet"])
+
+    return export_paths

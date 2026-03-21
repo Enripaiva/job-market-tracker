@@ -1,5 +1,6 @@
 requests>=2.31.0
 urllib3<2
 pandas>=2.0.0
+pyarrow>=16.0.0
 pyreadstat>=1.2.0
 python-dotenv>=1.0.1

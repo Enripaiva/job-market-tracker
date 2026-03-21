@@ -1,5 +1,3 @@
-# fetch_jobs.py
-import json
 import time
 
 import pandas as pd
@@ -49,7 +47,6 @@ def fetch_jobs(
                 )
                 response.raise_for_status()
                 data = response.json()
-                print(f"  DEBUG raw response: {json.dumps(data, indent=2)[:500]}")
 
                 jobs = data.get("data", [])
                 if not jobs:

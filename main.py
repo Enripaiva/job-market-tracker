@@ -6,15 +6,21 @@ from pathlib import Path
 from dotenv import load_dotenv
 import pandas as pd
 
-from pipeline import run_export, run_extract, run_transform
+from pipeline import ExportPaths, run_export, run_extract, run_transform
 from queries import DEFAULT_QUERIES
 
 # ── Defaults ────────────────────────────────────────────
-DEFAULT_PAGES   = 5
-DEFAULT_DATE    = "all"   # all | today | 3days | week | month
+DEFAULT_PAGES = 3
+DEFAULT_DATE = "all"  # all | today | 3days | week | month
 DEFAULT_COUNTRY = "it"
 DEFAULT_RAPIDAPI_HOST = "jsearch.p.rapidapi.com"
 DEFAULT_JSEARCH_SEARCH_URL = "https://jsearch.p.rapidapi.com/search"
+EXPORT_LABELS = {
+    "csv": "main csv",
+    "parquet": "main parquet",
+    "summary_csv": "summary csv",
+    "summary_parquet": "summary parquet",
+}
 # ────────────────────────────────────────────────────────
 
 
@@ -35,26 +41,26 @@ def parse_args() -> argparse.Namespace:
         "--query",
         type=str,
         default=None,
-        help='Search string, e.g. "data engineer" or "AI economist italy". If omitted, all queries from queries.py are used.'
+        help='Search string, e.g. "data engineer" or "AI economist italy". If omitted, all queries from queries.py are used.',
     )
     parser.add_argument(
         "--pages",
         type=int,
         default=DEFAULT_PAGES,
-        help=f"Number of pages to fetch (10 jobs/page, default: {DEFAULT_PAGES})"
+        help=f"Number of pages to fetch (10 jobs/page, default: {DEFAULT_PAGES})",
     )
     parser.add_argument(
         "--date",
         type=str,
         default=DEFAULT_DATE,
         choices=["all", "today", "3days", "week", "month"],
-        help=f"Posted date filter (default: {DEFAULT_DATE})"
+        help=f"Posted date filter (default: {DEFAULT_DATE})",
     )
     parser.add_argument(
         "--country",
         type=str,
         default=DEFAULT_COUNTRY,
-        help=f"2-letter ISO country code (default: {DEFAULT_COUNTRY})"
+        help=f"2-letter ISO country code (default: {DEFAULT_COUNTRY})",
     )
     return parser.parse_args()
 
@@ -76,7 +82,9 @@ def log_run_start(queries: list[str], args: argparse.Namespace) -> None:
     print(f"\n{'='*55}")
     print("  Job Market Tracker")
     print(f"  Query:   {query_label}")
-    print(f"  Country: {args.country.upper()} | Date: {args.date} | Pages: {args.pages}")
+    print(
+        f"  Country: {args.country.upper()} | Date: {args.date} | Pages: {args.pages}"
+    )
     print(f"{'='*55}\n")
 
 
@@ -92,11 +100,13 @@ def load_api_settings() -> tuple[str, str]:
     return api_key, api_host
 
 
-def log_run_end(csv_path: str) -> None:
+def log_run_end(export_paths: ExportPaths) -> None:
     print(f"\n{'='*55}")
     print("  Done! Files saved in /output/")
-    if csv_path:
-        print(f"  .csv  → {csv_path}")
+    for key, label in EXPORT_LABELS.items():
+        path = export_paths.get(key)
+        if path:
+            print(f"  {label:<15} → {path}")
     print(f"{'='*55}\n")
 
 
@@ -134,9 +144,15 @@ def main() -> None:
 
     df_clean = pd.concat(frames, ignore_index=True)
 
-    csv_path = run_export(df_clean, base_name)
-    
-    log_run_end(csv_path)
+    summary_df = (
+        df_clean.groupby("search_query")
+        .size()
+        .reset_index(name="job_count")
+    )
+
+    export_paths = run_export(df_clean, summary_df, base_name)
+
+    log_run_end(export_paths)
 
 
 if __name__ == "__main__":
