@@ -73,3 +73,9 @@ def export_csv(df: pd.DataFrame, filepath: str) -> None:
     Path(filepath).parent.mkdir(parents=True, exist_ok=True)
     df.to_csv(filepath, index=False, encoding="utf-8-sig")
     print(f"CSV saved to: {filepath}")
+
+
+def export_parquet(df: pd.DataFrame, filepath: str) -> None:
+    Path(filepath).parent.mkdir(parents=True, exist_ok=True)
+    df.to_parquet(filepath, index=False)
+    print(f"Parquet saved to: {filepath}")

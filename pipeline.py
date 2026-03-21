@@ -1,6 +1,6 @@
 import pandas as pd
 
-from export import export_csv
+from export import export_csv, export_parquet
 from fetch_jobs import fetch_jobs
 from transform import transform
 
@@ -46,5 +46,7 @@ def run_export(df_clean: pd.DataFrame, base_name: str) -> str:
     print("\n[ 3/3 ] Export...")
 
     csv_path = f"output/{base_name}.csv"
+    parquet_path = f"output/{base_name}.parquet"
     export_csv(df_clean, csv_path)
+    export_parquet(df_clean, parquet_path)
     return csv_path
