@@ -110,6 +110,33 @@ output/
 - `pyreadstat` for optional Stata `.dta` exports via `export.py`
 - `python-dotenv` for loading `.env`
 
+
+## Upload su S3
+
+Per caricare i file generati su un bucket S3, usa lo script `upload_to_s3.py` (richiede `boto3` e credenziali AWS configurate):
+
+```python
+from pathlib import Path
+import boto3
+
+BUCKET_NAME = "job-market-tracker-enrico"
+REGION = "eu-west-1"
+files_to_upload = [
+	"output/multi_query_20260321_225229.parquet",
+	"output/multi_query_20260321_225229.csv",
+]
+s3 = boto3.client("s3", region_name=REGION)
+for local_path in files_to_upload:
+	s3_key = f"jobs/{Path(local_path).name}"
+	if Path(local_path).exists():
+		s3.upload_file(local_path, BUCKET_NAME, s3_key)
+		print(f"✅ Uploaded: {local_path} → s3://{BUCKET_NAME}/{s3_key}")
+	else:
+		print(f"❌ File not found: {local_path}")
+```
+
+La chiave S3 viene generata automaticamente dal nome file locale, con prefisso `jobs/`.
+
 ## Notes
 
 - The free JSearch plan on RapidAPI allows 200 calls per month.
